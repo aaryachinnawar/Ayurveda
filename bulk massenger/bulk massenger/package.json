@@ -1,0 +1,27 @@
+{
+  "name": "bulk-whatsapp-messenger",
+  "version": "1.0.0",
+  "description": "Web app to upload CSV and send bulk WhatsApp messages via WhatsApp Cloud API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "whatsapp",
+    "bulk",
+    "csv",
+    "express"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.7",
+    "cors": "^2.8.5",
+    "csv-parse": "^5.5.6",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.4.0",
+    "multer": "^2.0.0"
+  }
+}

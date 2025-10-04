@@ -5,6 +5,7 @@ import AdminPage from './pages/AdminPage';
 import CsvPage from './pages/CsvPage';
 import LandingPage from './pages/LandingPage';
 import SplineLandingPage from './pages/SplineLandingPage';
+import BulkMessengerPage from './pages/BulkMessengerPage';
 import NavbarLanding from './components/NavbarLanding';
 import AdminRoute from './components/AdminRoute';
 import { Toaster } from 'react-hot-toast';
@@ -58,6 +59,7 @@ function App() {
           <Route path="/home" element={<AuthenticatedLayout><LandingPage /></AuthenticatedLayout>} />
           <Route path="/upload" element={<AuthenticatedLayout><CsvPage /></AuthenticatedLayout>} />
           <Route path="/reports" element={<AuthenticatedLayout><ReportsPage /></AuthenticatedLayout>} />
+          <Route path="/bulk-messenger" element={<AuthenticatedLayout><BulkMessengerPage /></AuthenticatedLayout>} />
           <Route path="/admin" element={<ProtectedRoute adminOnly={true}><AuthenticatedLayout><AdminPage /></AuthenticatedLayout></ProtectedRoute>} />
           <Route path="/" element={<Navigate to="/spline" replace />} />
           <Route path="*" element={<AuthRedirect />} />

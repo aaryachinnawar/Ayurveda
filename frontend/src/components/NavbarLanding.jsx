@@ -1,5 +1,5 @@
 import React from 'react';
-import { FiHome, FiUpload, FiFileText, FiLogOut } from 'react-icons/fi';
+import { FiHome, FiUpload, FiFileText, FiLogOut, FiMessageSquare } from 'react-icons/fi';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 
@@ -25,6 +25,8 @@ const NavbarLanding = ({ minimal }) => {
     navLinks.push({ label: 'UPLOAD', icon: <FiUpload className="text-xl" />, path: '/upload' });
     navLinks.push({ label: 'REPORTS', icon: <FiFileText className="text-xl" />, path: '/reports' });
   }
+  // Add bulk messaging for all authenticated users
+  navLinks.push({ label: 'BULK MESSAGE', icon: <FiMessageSquare className="text-xl" />, path: '/bulk-messenger' });
 
   const handleLogout = () => {
     localStorage.removeItem('auth');
