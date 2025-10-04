@@ -18,9 +18,18 @@ const LoginPage = () => {
     setError('');
     try {
       const res = await login(username, password, role);
-      if (res.role !== role) {
+      if (role === 'ADMIN') {
+        const isAdmin = res.role === 'SUPER_ADMIN' || res.role === 'COLLEGE_ADMIN';
+        if (!isAdmin) {
+          toast.error('Role does not match credentials.');
+          return;
+        }
+      } else {
+        const isUser = res.role === 'FACULTY' || res.role === 'DATA_ANALYST' || res.role === 'VIEWER';
+        if (!isUser) {
         toast.error('Role does not match credentials.');
         return;
+        }
       }
       localStorage.setItem('auth', JSON.stringify({
         token: res.token,
@@ -29,10 +38,10 @@ const LoginPage = () => {
         id: res.id
       }));
       toast.success('Login successful!');
-      if (res.role === 'ADMIN') {
+      if (res.role === 'SUPER_ADMIN' || res.role === 'COLLEGE_ADMIN') {
         navigate('/admin');
       } else {
-        navigate('/csv');
+        navigate('/home');
       }
     } catch (err) {
       toast.error('Invalid username or password');
@@ -66,15 +75,15 @@ const LoginPage = () => {
             <div className="flex flex-col gap-1 w-full">
               <label className="text-gray-700 text-sm">Username *</label>
               <div className="relative w-full">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500">
+                {/* <span className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500">
                   <FiUser />
-                </span>
+                </span> */}
                 <input
                   type="text"
                   value={username}
                   onChange={e => setUsername(e.target.value)}
                   required
-                  className="w-full pl-10 pr-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="w-full pl-3 pr-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400 text-black"
                   placeholder="Username"
                 />
               </div>
@@ -82,15 +91,15 @@ const LoginPage = () => {
             <div className="flex flex-col gap-1 w-full">
               <label className="text-gray-700 text-sm">Password *</label>
               <div className="relative w-full">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500">
+                {/* <span className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500">
                   <FiLock />
-                </span>
+                </span> */}
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   required
-                  className="w-full pl-10 pr-10 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="w-full pl-3 pr-10 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400 text-black"
                   placeholder="Password"
                 />
                 <button
@@ -110,10 +119,11 @@ const LoginPage = () => {
               Login as {role.charAt(0) + role.slice(1).toLowerCase()}
             </button>
           </form>
-          <div className="text-center mt-4 text-sm text-gray-600">
+          {/* Remove the register link below */}
+          {/* <div className="text-center mt-4 text-sm text-gray-600">
             Don&apos;t have an account?{' '}
             <a href="/register" className="text-green-700 font-semibold hover:underline">Register</a>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

@@ -8,9 +8,9 @@ const AdminRoute = ({ children }) => {
     toast.error('Please log in to access the admin panel');
     return <Navigate to="/login" replace />;
   }
-  if (auth.role !== 'ADMIN') {
+  if (auth.role !== 'SUPER_ADMIN' && auth.role !== 'COLLEGE_ADMIN') {
     toast.error('You are not authorized to access the admin panel');
-    return <Navigate to="/login" replace />; // Or use a NotAuthorized page
+    return <Navigate to="/login" replace />;
   }
   return children;
 };

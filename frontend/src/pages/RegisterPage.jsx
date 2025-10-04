@@ -1,25 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { registerUser } from '../services/api';
+import { registerUser, fetchRoles } from '../services/api';
 import { toast } from 'react-hot-toast';
+import UserForm from '../components/UserForm';
 
 const RegisterPage = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [email, setEmail] = useState('');
-  const [profession, setProfession] = useState('');
+  const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  useEffect(() => {
+    const auth = JSON.parse(localStorage.getItem('auth'));
+    if (!auth || (auth.role !== 'SUPER_ADMIN' && auth.role !== 'COLLEGE_ADMIN')) {
+      navigate('/login');
+    }
+    fetchRolesList();
+  }, [navigate]);
+
+  const fetchRolesList = async () => {
+    try {
+      const data = await fetchRoles();
+      setRoles(data);
+    } catch (err) {
+      toast.error('Failed to fetch roles');
+    }
+  };
+
+  const handleRegister = async (user) => {
     setLoading(true);
     try {
-      await registerUser({ username, password, email, profession });
+      await registerUser(user);
       toast.success('Registration successful!');
-      navigate('/home');
+      navigate('/admin');
     } catch (err) {
-      toast.error('Registration failed. Try a different username or check your details.');
+      toast.error(err.message || 'Registration failed. Try a different username or check your details.');
     } finally {
       setLoading(false);
     }
@@ -42,27 +56,7 @@ const RegisterPage = () => {
               <img src="https://cdn-icons-png.flaticon.com/512/2917/2917995.png" alt="Ayurveda Logo" className="w-12 h-12 mb-2" />
               <h2 className="text-2xl font-bold text-gray-800">Create your account</h2>
             </div>
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-              <div>
-                <label className="block text-gray-700 text-sm mb-1">Username</label>
-                <input type="text" value={username} onChange={e => setUsername(e.target.value)} required className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-600" />
-              </div>
-              <div>
-                <label className="block text-gray-700 text-sm mb-1">Password</label>
-                <input type="password" value={password} onChange={e => setPassword(e.target.value)} required className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-600" />
-              </div>
-              <div>
-                <label className="block text-gray-700 text-sm mb-1">Email</label>
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)} required className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-600" />
-              </div>
-              <div>
-                <label className="block text-gray-700 text-sm mb-1">Profession</label>
-                <input type="text" value={profession} onChange={e => setProfession(e.target.value)} required className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-600" />
-              </div>
-              <button type="submit" disabled={loading} className="w-full py-3 mt-2 bg-green-700 text-white rounded-lg font-semibold text-lg hover:bg-green-800 transition flex items-center justify-center gap-2 shadow disabled:opacity-60">
-                {loading ? 'Registering...' : 'Register'}
-              </button>
-            </form>
+            <UserForm onSubmit={handleRegister} roles={roles} />
             <div className="text-center mt-4 text-sm text-gray-600">
               Already have an account?{' '}
               <a href="/login" className="text-green-700 font-semibold hover:underline">Sign in</a>

@@ -1,4 +1,4 @@
-package com.ayurveda.backend;
+package com.ayurveda.backend.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

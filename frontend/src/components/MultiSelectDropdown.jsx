@@ -36,10 +36,10 @@ const MultiSelectDropdown = ({ options, selected, onChange, label, placeholder =
       <label className="block text-gray-700 text-sm mb-1">{label}</label>
       <button
         type="button"
-        className="w-full border rounded px-3 py-2 text-left bg-white focus:outline-none focus:ring-2 focus:ring-green-600"
+        className="w-full border rounded px-3 py-2 text-left bg-white focus:outline-none focus:ring-2 focus:ring-green-600 text-black"
         onClick={() => setOpen((o) => !o)}
       >
-        <span className="truncate block min-h-[1.2em]">
+        <span className="truncate block min-h-[1.2em] text-black">
           {selected.length === 0 ? (
             <span className="text-gray-400">{placeholder}</span>
           ) : (
@@ -49,14 +49,14 @@ const MultiSelectDropdown = ({ options, selected, onChange, label, placeholder =
       </button>
       {open && (
         <div className="absolute z-30 mt-1 w-full bg-white border rounded shadow-lg max-h-56 overflow-y-auto">
-          <div className="px-3 py-2 border-b flex items-center gap-2 cursor-pointer hover:bg-gray-50" onClick={handleSelectAll}>
+          <div className="px-3 py-2 border-b flex items-center gap-2 cursor-pointer hover:bg-gray-50 text-black" onClick={handleSelectAll}>
             <input type="checkbox" checked={allSelected} readOnly />
-            <span className="text-sm">Select All</span>
+            <span className="text-sm text-black">Select All</span>
           </div>
           {options.map((option) => (
             <div
               key={option}
-              className="px-3 py-2 flex items-center gap-2 cursor-pointer hover:bg-gray-50"
+              className="px-3 py-2 flex items-center gap-2 cursor-pointer hover:bg-gray-50 text-black"
               onClick={() => toggleOption(option)}
             >
               <input
@@ -65,7 +65,7 @@ const MultiSelectDropdown = ({ options, selected, onChange, label, placeholder =
                 onChange={() => toggleOption(option)}
                 onClick={(e) => e.stopPropagation()}
               />
-              <span className="text-sm">{option}</span>
+              <span className="text-sm text-black">{option}</span>
             </div>
           ))}
         </div>

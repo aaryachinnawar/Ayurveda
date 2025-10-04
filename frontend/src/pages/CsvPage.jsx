@@ -5,12 +5,16 @@ import Layout from '../components/Layout';
 import { fetchFilteredCsvData } from '../services/api';
 import MultiSelectDropdown from '../components/MultiSelectDropdown';
 import { toast } from 'react-hot-toast';
+import { useLocation } from 'react-router-dom';
+import { useCsvData } from '../context/CsvDataContext';
 
 const COLUMN_ALIASES = {
   disease: ["disease", "diseases (previous)", "illness", "condition"],
   age: ["age", "years"],
   village: ["village", "location", "city", "town"],
-  gender: ["gender", "sex"]
+  gender: ["gender", "sex"],
+  weight: ["weight", "weight (kg)"],
+  height: ["height", "height (cm)"]
 };
 
 function normalize(str) {
@@ -40,6 +44,14 @@ function parseCSV(text) {
     });
     return row;
   });
+}
+
+function remapRow(row, mapping) {
+  const newRow = { ...row };
+  Object.entries(mapping).forEach(([key, col]) => {
+    newRow[key] = row[col];
+  });
+  return newRow;
 }
 
 const VILLAGES = ['Nagpur', 'Pune', 'Mumbai'];
@@ -82,17 +94,42 @@ function downloadCSV(rows, filename = 'filtered_data.csv') {
 }
 
 const CsvPage = () => {
-  const [csvData, setCsvData] = useState([]);
-  const [fileName, setFileName] = useState('');
+  const { csvData, setCsvData, remappedData, setRemappedData, fileName, setFileName, columnMap, setColumnMap } = useCsvData();
   const [village, setVillage] = useState([]);
   const [disease, setDisease] = useState([]);
   const [ageRange, setAgeRange] = useState('');
   const [gender, setGender] = useState('');
   const [filteredData, setFilteredData] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [villageOptions, setVillageOptions] = useState([]);
   const [diseaseOptions, setDiseaseOptions] = useState([]);
-  const [columnMap, setColumnMap] = useState({});
+  const [loading, setLoading] = useState(false);
+  const location = useLocation();
+
+  // Remove localStorage logic, just use context state
+  React.useEffect(() => {
+    if (!remappedData.length) {
+      setCsvData([]);
+      setRemappedData([]);
+      setFileName('');
+      setColumnMap({});
+      setFilteredData([]);
+      setVillageOptions([]);
+      setDiseaseOptions([]);
+    }
+  }, []);
+
+  // Recalculate options when remappedData changes
+  React.useEffect(() => {
+    if (remappedData.length) {
+      const villages = Array.from(new Set(remappedData.map(row => (row.village || '').trim()).filter(Boolean)));
+      const diseases = Array.from(new Set(remappedData.map(row => (row.disease || '').trim()).filter(Boolean)));
+      setVillageOptions(villages);
+      setDiseaseOptions(diseases);
+    } else {
+      setVillageOptions([]);
+      setDiseaseOptions([]);
+    }
+  }, [remappedData]);
 
   const handleUpload = (file) => {
     setFileName(file.name);
@@ -100,19 +137,22 @@ const CsvPage = () => {
     reader.onload = (e) => {
       const text = e.target.result;
       const data = parseCSV(text);
-      setCsvData(data);
-      setFilteredData(data); // show all data by default
-      setVillage([]);
-      setDisease([]);
-      setAgeRange('');
-      setGender('');
       // Detect columns
       const headers = data.length > 0 ? Object.keys(data[0]) : [];
       const mapping = mapColumns(headers);
       setColumnMap(mapping);
-      // Extract unique villages and diseases from data (trim, filter out blanks)
-      const villages = mapping.village ? Array.from(new Set(data.map(row => (row[mapping.village] || '').trim()).filter(Boolean))) : [];
-      const diseases = mapping.disease ? Array.from(new Set(data.map(row => (row[mapping.disease] || '').trim()).filter(Boolean))) : [];
+      // Remap all rows to standard keys
+      const remapped = data.map(row => remapRow(row, mapping));
+      setRemappedData(remapped);
+      setCsvData(data);
+      setFilteredData(remapped); // show all data by default
+      setVillage([]);
+      setDisease([]);
+      setAgeRange('');
+      setGender('');
+      // Extract unique villages and diseases from remapped data
+      const villages = Array.from(new Set(remapped.map(row => (row.village || '').trim()).filter(Boolean)));
+      const diseases = Array.from(new Set(remapped.map(row => (row.disease || '').trim()).filter(Boolean)));
       setVillageOptions(villages);
       setDiseaseOptions(diseases);
       toast.success('CSV file uploaded successfully!');
@@ -207,14 +247,14 @@ const CsvPage = () => {
             />
             <div>
               <label className="block text-gray-700 text-sm mb-1">Age Range</label>
-              <select value={ageRange} onChange={e => setAgeRange(e.target.value)} className="border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-600">
+              <select value={ageRange} onChange={e => setAgeRange(e.target.value)} className="border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-600 text-black">
                 <option value="">All</option>
                 {AGE_RANGES.map(a => <option key={a} value={a}>{a}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-gray-700 text-sm mb-1">Gender</label>
-              <select value={gender} onChange={e => setGender(e.target.value)} className="border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-600">
+              <select value={gender} onChange={e => setGender(e.target.value)} className="border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-600 text-black">
                 <option value="">All</option>
                 {GENDERS.map(g => <option key={g} value={g}>{g}</option>)}
               </select>

@@ -17,13 +17,13 @@ const NavbarLanding = ({ minimal }) => {
     );
   }
 
-  const navLinks = [
-    { label: 'HOME', icon: <FiHome className="text-xl" />, path: '/home' },
-    { label: 'UPLOAD', icon: <FiUpload className="text-xl" />, path: '/upload' },
-    { label: 'REPORTS', icon: <FiFileText className="text-xl" />, path: '/reports' },
-  ];
-  if (auth && auth.role === 'ADMIN') {
+  const navLinks = [];
+  if (auth && (auth.role === 'ADMIN' || auth.role === 'SUPER_ADMIN' || auth.role === 'COLLEGE_ADMIN')) {
     navLinks.push({ label: 'ADMIN', icon: <FiHome className="text-xl" />, path: '/admin' });
+  } else {
+    navLinks.push({ label: 'HOME', icon: <FiHome className="text-xl" />, path: '/home' });
+    navLinks.push({ label: 'UPLOAD', icon: <FiUpload className="text-xl" />, path: '/upload' });
+    navLinks.push({ label: 'REPORTS', icon: <FiFileText className="text-xl" />, path: '/reports' });
   }
 
   const handleLogout = () => {

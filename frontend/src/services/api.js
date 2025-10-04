@@ -26,6 +26,14 @@ export async function getUsers() {
   return res.json();
 }
 
+export async function fetchRoles() {
+  const res = await fetch('http://localhost:8080/api/roles', {
+    headers: { ...getAuthHeader() }
+  });
+  if (!res.ok) throw new Error('Failed to fetch roles');
+  return res.json();
+}
+
 export async function createUser(user) {
   const res = await fetch(API_URL, {
     method: 'POST',
@@ -57,13 +65,20 @@ export async function deleteUser(id) {
   if (!res.ok) throw new Error('Failed to delete user');
 }
 
-export async function registerUser({ username, password, email, profession }) {
+export async function registerUser(user) {
   const res = await fetch(API_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password, email, profession, role: 'USER' })
+    headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+    body: JSON.stringify(user)
   });
-  if (!res.ok) throw new Error('Failed to register');
+  if (!res.ok) {
+    let errorMsg = 'Failed to register';
+    try {
+      const data = await res.json();
+      errorMsg = typeof data === 'string' ? data : (data.error || errorMsg);
+    } catch (e) {}
+    throw new Error(errorMsg);
+  }
   return res.json();
 }
 

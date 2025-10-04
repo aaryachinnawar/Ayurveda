@@ -57,7 +57,7 @@ const CsvTable = ({ data }) => {
         placeholder="Filter..."
         value={filter}
         onChange={e => setFilter(e.target.value)}
-        className="mb-4 px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-green-400 w-full max-w-xs"
+        className="mb-4 px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-green-400 w-full max-w-xs text-black"
       />
       <div className="overflow-x-auto w-full">
         <table className="min-w-[900px] w-full border rounded-xl text-left bg-white">
@@ -86,7 +86,7 @@ const CsvTable = ({ data }) => {
             {sortedData.map((row, idx) => (
               <tr key={idx} className="even:bg-gray-50">
                 {headers.map(header => (
-                  <td key={header} className="px-4 py-2 border-t">{row[header]}</td>
+                  <td key={header} className="px-4 py-2 border-t text-black">{row[header]}</td>
                 ))}
               </tr>
             ))}
