@@ -1,36 +1,11 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import CsvUpload from '../components/CsvUpload';
 import CsvTable from '../components/CsvTable';
 import Layout from '../components/Layout';
-import { fetchFilteredCsvData } from '../services/api';
-import MultiSelectDropdown from '../components/MultiSelectDropdown';
+import FilterPanel from '../components/FilterPanel';
 import { toast } from 'react-hot-toast';
 import { useLocation } from 'react-router-dom';
 import { useCsvData } from '../context/CsvDataContext';
-
-const COLUMN_ALIASES = {
-  disease: ["disease", "diseases (previous)", "illness", "condition"],
-  age: ["age", "years"],
-  village: ["village", "location", "city", "town"],
-  gender: ["gender", "sex"],
-  weight: ["weight", "weight (kg)"],
-  height: ["height", "height (cm)"]
-};
-
-function normalize(str) {
-  return (str || "").toLowerCase().replace(/[^a-z]/g, "");
-}
-
-function mapColumns(headers) {
-  const mapping = {};
-  Object.entries(COLUMN_ALIASES).forEach(([key, aliases]) => {
-    const found = headers.find(h =>
-      aliases.some(alias => normalize(h) === normalize(alias))
-    );
-    if (found) mapping[key] = found;
-  });
-  return mapping;
-}
 
 function parseCSV(text) {
   const lines = text.split('\n').filter(Boolean);
@@ -46,18 +21,28 @@ function parseCSV(text) {
   });
 }
 
-function remapRow(row, mapping) {
-  const newRow = { ...row };
-  Object.entries(mapping).forEach(([key, col]) => {
-    newRow[key] = row[col];
-  });
-  return newRow;
-}
+const defaultFilters = {
+  villageName: '',
+  wardArea: '',
+  ageRange: '',
+  gender: '',
+  educationLevel: '',
+  occupation: '',
+  heardAbout: '',
+  hearingSource: [],
+  medicine: [],
+  surgery: [],
+  gynecology: [],
+  pediatrics: [],
+  ent: [],
+  search: ''
+};
 
-const VILLAGES = ['Nagpur', 'Pune', 'Mumbai'];
-const DISEASES = ['Diabetes', 'Hypertension', 'Asthma'];
-const AGE_RANGES = ['18-24', '25-34', '35-44', '45-54', '55+'];
-const GENDERS = ['Male', 'Female', 'Other'];
+function findColumn(row, keywords) {
+  if (!row) return null;
+  const keys = Object.keys(row);
+  return keys.find(k => keywords.some(keyword => k.toLowerCase().includes(keyword.toLowerCase())));
+}
 
 function escapeCSVValue(value) {
   if (value == null) return '';
@@ -95,14 +80,7 @@ function downloadCSV(rows, filename = 'filtered_data.csv') {
 
 const CsvPage = () => {
   const { csvData, setCsvData, remappedData, setRemappedData, fileName, setFileName, columnMap, setColumnMap } = useCsvData();
-  const [village, setVillage] = useState([]);
-  const [disease, setDisease] = useState([]);
-  const [ageRange, setAgeRange] = useState('');
-  const [gender, setGender] = useState('');
-  const [filteredData, setFilteredData] = useState([]);
-  const [villageOptions, setVillageOptions] = useState([]);
-  const [diseaseOptions, setDiseaseOptions] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [filters, setFilters] = useState(defaultFilters);
   const location = useLocation();
 
   // Remove localStorage logic, just use context state
@@ -112,24 +90,9 @@ const CsvPage = () => {
       setRemappedData([]);
       setFileName('');
       setColumnMap({});
-      setFilteredData([]);
-      setVillageOptions([]);
-      setDiseaseOptions([]);
+      setFilters(defaultFilters);
     }
   }, []);
-
-  // Recalculate options when remappedData changes
-  React.useEffect(() => {
-    if (remappedData.length) {
-      const villages = Array.from(new Set(remappedData.map(row => (row.village || '').trim()).filter(Boolean)));
-      const diseases = Array.from(new Set(remappedData.map(row => (row.disease || '').trim()).filter(Boolean)));
-      setVillageOptions(villages);
-      setDiseaseOptions(diseases);
-    } else {
-      setVillageOptions([]);
-      setDiseaseOptions([]);
-    }
-  }, [remappedData]);
 
   const handleUpload = (file) => {
     setFileName(file.name);
@@ -137,24 +100,11 @@ const CsvPage = () => {
     reader.onload = (e) => {
       const text = e.target.result;
       const data = parseCSV(text);
-      // Detect columns
-      const headers = data.length > 0 ? Object.keys(data[0]) : [];
-      const mapping = mapColumns(headers);
-      setColumnMap(mapping);
-      // Remap all rows to standard keys
-      const remapped = data.map(row => remapRow(row, mapping));
-      setRemappedData(remapped);
       setCsvData(data);
-      setFilteredData(remapped); // show all data by default
-      setVillage([]);
-      setDisease([]);
-      setAgeRange('');
-      setGender('');
-      // Extract unique villages and diseases from remapped data
-      const villages = Array.from(new Set(remapped.map(row => (row.village || '').trim()).filter(Boolean)));
-      const diseases = Array.from(new Set(remapped.map(row => (row.disease || '').trim()).filter(Boolean)));
-      setVillageOptions(villages);
-      setDiseaseOptions(diseases);
+      // Keep remappedData aligned with csvData for other pages, but do not force old keys.
+      setRemappedData(data);
+      setColumnMap({});
+      setFilters(defaultFilters);
       toast.success('CSV file uploaded successfully!');
     };
     reader.onerror = () => {
@@ -163,58 +113,139 @@ const CsvPage = () => {
     reader.readAsText(file);
   };
 
-  // Backend filter fetch
-  const fetchBackendFilter = async (filters) => {
-    setLoading(true);
-    try {
-      const data = await fetchFilteredCsvData({ ...filters, fileName });
-      setFilteredData(data);
-    } catch (e) {
-      // fallback to frontend filter
-      setFilteredData(csvData.filter(row => {
-        // Use mapped columns
-        const vCol = columnMap.village;
-        const dCol = columnMap.disease;
-        const gCol = columnMap.gender;
-        const aCol = columnMap.age;
-        return (
-          (!filters.village.length || (vCol && filters.village.includes((row[vCol] || '').trim()))) &&
-          (!filters.disease.length || (dCol && filters.disease.includes((row[dCol] || '').trim()))) &&
-          (!filters.gender || (gCol && row[gCol] === filters.gender)) &&
-          (!filters.ageRange || (() => {
-            if (!aCol) return true;
-            const age = parseInt(row[aCol], 10);
-            if (filters.ageRange === '18-24') return age >= 18 && age <= 24;
-            if (filters.ageRange === '25-34') return age >= 25 && age <= 34;
-            if (filters.ageRange === '35-44') return age >= 35 && age <= 44;
-            if (filters.ageRange === '45-54') return age >= 45 && age <= 54;
-            if (filters.ageRange === '55+') return age >= 55;
-            return true;
-          })())
-        );
-      }));
-    } finally {
-      setLoading(false);
-    }
-  };
+  const filteredData = useMemo(() => {
+    let data = csvData;
 
-  // Only apply filters when user changes a filter (not on upload)
-  React.useEffect(() => {
-    if (csvData.length > 0 && (village.length || disease.length || ageRange || gender)) {
-      fetchBackendFilter({ village, disease, ageRange, gender });
-    } else if (csvData.length > 0 && !village.length && !disease.length && !ageRange && !gender) {
-      setFilteredData(csvData);
+    if (filters.villageName) {
+      const villageCol = findColumn(data[0], ['village']);
+      if (villageCol) {
+        data = data.filter(row => String(row[villageCol] || '').toLowerCase() === filters.villageName.toLowerCase());
+      }
     }
-    // eslint-disable-next-line
-  }, [village, disease, ageRange, gender, columnMap]);
 
-  const resetFilters = () => {
-    setVillage([]);
-    setDisease([]);
-    setAgeRange('');
-    setGender('');
-    setFilteredData(csvData);
-  };
+    if (filters.wardArea) {
+      const wardCol = findColumn(data[0], ['ward', 'area']);
+      if (wardCol) {
+        data = data.filter(row => String(row[wardCol] || '').toLowerCase() === filters.wardArea.toLowerCase());
+      }
+    }
+
+    if (filters.gender) {
+      const genderCol = findColumn(data[0], ['gender']);
+      if (genderCol) {
+        data = data.filter(row => String(row[genderCol] || '').toLowerCase() === filters.gender.toLowerCase());
+      }
+    }
+
+    if (filters.educationLevel) {
+      const eduCol = findColumn(data[0], ['education']);
+      if (eduCol) {
+        data = data.filter(row => String(row[eduCol] || '').toLowerCase() === filters.educationLevel.toLowerCase());
+      }
+    }
+
+    if (filters.occupation) {
+      const occCol = findColumn(data[0], ['occupation']);
+      if (occCol) {
+        data = data.filter(row => String(row[occCol] || '').toLowerCase() === filters.occupation.toLowerCase());
+      }
+    }
+
+    if (filters.heardAbout) {
+      const heardCol = findColumn(data[0], ['heard', 'datt', 'meghe']);
+      if (heardCol) {
+        data = data.filter(row => String(row[heardCol] || '').toLowerCase() === filters.heardAbout.toLowerCase());
+      }
+    }
+
+    if (filters.ageRange) {
+      const ageCol = findColumn(data[0], ['age']);
+      if (ageCol) {
+        data = data.filter(row => {
+          const age = parseInt(row[ageCol], 10);
+          if (isNaN(age)) return false;
+          switch (filters.ageRange) {
+            case '18-24': return age >= 18 && age <= 24;
+            case '25-34': return age >= 25 && age <= 34;
+            case '35-44': return age >= 35 && age <= 44;
+            case '45-54': return age >= 45 && age <= 54;
+            case '55-64': return age >= 55 && age <= 64;
+            case '65+': return age >= 65;
+            default: return true;
+          }
+        });
+      }
+    }
+
+    if (filters.hearingSource && filters.hearingSource.length > 0) {
+      const hearCol = findColumn(data[0], ['hear', 'source', 'how']);
+      if (hearCol) {
+        data = data.filter(row => {
+          const value = String(row[hearCol] || '').toLowerCase();
+          return filters.hearingSource.some(filter => value.includes(String(filter).toLowerCase()));
+        });
+      }
+    }
+
+    if (filters.medicine && filters.medicine.length > 0) {
+      const medCol = findColumn(data[0], ['medicine', 'panchakarma']);
+      if (medCol) {
+        data = data.filter(row => {
+          const value = String(row[medCol] || '').toLowerCase();
+          return filters.medicine.some(filter => value.includes(String(filter).toLowerCase()));
+        });
+      }
+    }
+
+    if (filters.surgery && filters.surgery.length > 0) {
+      const surgCol = findColumn(data[0], ['surgery']);
+      if (surgCol) {
+        data = data.filter(row => {
+          const value = String(row[surgCol] || '').toLowerCase();
+          return filters.surgery.some(filter => value.includes(String(filter).toLowerCase()));
+        });
+      }
+    }
+
+    if (filters.gynecology && filters.gynecology.length > 0) {
+      const gynCol = findColumn(data[0], ['gynecology', 'gynec']);
+      if (gynCol) {
+        data = data.filter(row => {
+          const value = String(row[gynCol] || '').toLowerCase();
+          return filters.gynecology.some(filter => value.includes(String(filter).toLowerCase()));
+        });
+      }
+    }
+
+    if (filters.pediatrics && filters.pediatrics.length > 0) {
+      const pedCol = findColumn(data[0], ['pediatric', 'pediatr']);
+      if (pedCol) {
+        data = data.filter(row => {
+          const value = String(row[pedCol] || '').toLowerCase();
+          return filters.pediatrics.some(filter => value.includes(String(filter).toLowerCase()));
+        });
+      }
+    }
+
+    if (filters.ent && filters.ent.length > 0) {
+      const entCol = findColumn(data[0], ['ent', 'ophthalmology', 'eye', 'ear']);
+      if (entCol) {
+        data = data.filter(row => {
+          const value = String(row[entCol] || '').toLowerCase();
+          return filters.ent.some(filter => value.includes(String(filter).toLowerCase()));
+        });
+      }
+    }
+
+    if (filters.search && filters.search.trim()) {
+      const search = filters.search.trim().toLowerCase();
+      data = data.filter(row => Object.values(row).some(val => String(val).toLowerCase().includes(search)));
+    }
+
+    return data;
+  }, [csvData, filters]);
+
+  const resetFilters = () => setFilters(defaultFilters);
 
   return (
     <Layout>
@@ -232,43 +263,16 @@ const CsvPage = () => {
             </div>
           )}
           {/* Filters */}
-          <div className="w-full flex flex-wrap gap-4 items-center justify-center mb-6">
-            <MultiSelectDropdown
-              options={villageOptions}
-              selected={village}
-              onChange={setVillage}
-              label="Village"
-            />
-            <MultiSelectDropdown
-              options={diseaseOptions}
-              selected={disease}
-              onChange={setDisease}
-              label="Disease"
-            />
-            <div>
-              <label className="block text-gray-700 text-sm mb-1">Age Range</label>
-              <select value={ageRange} onChange={e => setAgeRange(e.target.value)} className="border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-600 text-black">
-                <option value="">All</option>
-                {AGE_RANGES.map(a => <option key={a} value={a}>{a}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-gray-700 text-sm mb-1">Gender</label>
-              <select value={gender} onChange={e => setGender(e.target.value)} className="border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-600 text-black">
-                <option value="">All</option>
-                {GENDERS.map(g => <option key={g} value={g}>{g}</option>)}
-              </select>
-            </div>
-            <button className="bg-green-600 text-white px-6 py-2 rounded font-semibold shadow hover:bg-green-700 transition mt-6 sm:mt-0" onClick={() => downloadCSV(filteredData)} disabled={loading}>
-              {loading ? 'Exporting...' : 'EXPORT FILTERED CSV'}
-            </button>
-            <button className="ml-2 bg-gray-200 text-gray-700 px-4 py-2 rounded font-semibold shadow hover:bg-gray-300 transition mt-6 sm:mt-0" onClick={resetFilters} disabled={loading}>
-              Reset Filters
-            </button>
-          </div>
+          <FilterPanel
+            csvData={csvData}
+            filters={filters}
+            setFilters={setFilters}
+            onExport={() => downloadCSV(filteredData)}
+            onReset={resetFilters}
+          />
           {/* Table */}
           <div className="w-full mt-2">
-            {loading ? <div className="text-center text-green-700 font-semibold py-8">Loading...</div> : <CsvTable data={filteredData} />}
+            <CsvTable data={filteredData} />
           </div>
         </div>
       </div>

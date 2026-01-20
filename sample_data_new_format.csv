@@ -1,0 +1,11 @@
+Date,Roll number of student(eg.2023001),Student Phone Number,Student Email Address,Village Name,Ward/Area,Patient Name,Age,Mobile number of Patient,Education Level,Gender Of Patient,Occupation,Have you heard about Datta Meghe Ayurved medical Collge & Hospital (Wanadongri,Nagpur),How did you hear about DMAMCHRC ?  (select all that apply),Medicine/ Panchakarma,Surgery,Gynecology,Pediatrics,Ophthalmology & ENT,Other
+2024-01-15,2023001,9876543210,student1@example.com,Nagpur,Ward 1,Ramesh Kumar,45,9876543211,Graduate,Male,Private Job,Yes,Social Media,Diabetes,Urine Disorder,,,,
+2024-01-16,2023002,9876543212,student2@example.com,Pune,Ward 2,Sunita Patel,32,9876543213,HSC,Female,Homemaker,Yes,Health Camp,Hypertention,,Menstrual Disorder,,
+2024-01-17,2023003,9876543214,student3@example.com,Mumbai,Ward 3,Amit Singh,28,9876543215,Postgraduate and above,Male,Government Job,No,Friends/Family,Asthama,,,Allergic Rhinitis,Diminished Vision,
+2024-01-18,2023004,9876543216,student4@example.com,Nagpur,Ward 1,Lakshmi Devi,55,9876543217,Upto 10th standard,Female,Retired,Yes,Newspaper,Diabetes,Hernia,Abnormal vaginal bleeding,,
+2024-01-19,2023005,9876543218,student5@example.com,Pune,Ward 2,Rajesh Verma,40,9876543219,Graduate,Male,Business/self Employed,Yes,Flex boards/Posters,Heart disease,Kidney Stone,,,
+2024-01-20,2023006,9876543220,student6@example.com,Mumbai,Ward 3,Anjali Desai,35,9876543221,HSC,Female,Student,No,Referred by Doctor,Paralysis,,PCOD,,
+2024-01-21,2023007,9876543222,student7@example.com,Nagpur,Ward 1,Vikram Malhotra,50,9876543223,Postgraduate and above,Male,Private Job,Yes,Social Media,Thyroid,Piles/Haemorrhoids,,,
+2024-01-22,2023008,9876543224,student8@example.com,Pune,Ward 2,Meera Iyer,38,9876543225,Graduate,Female,Homemaker,Yes,Health Camp,Obesity,,Uterine Prolapse,,
+2024-01-23,2023009,9876543226,student9@example.com,Mumbai,Ward 3,Suresh Reddy,42,9876543227,HSC,Male,Government Job,Yes,Friends/Family,Breathlesness,Weakness,Cyst,,Convulsions,,
+2024-01-24,2023010,9876543228,student10@example.com,Nagpur,Ward 1,Kavita Sharma,48,9876543229,Upto 10th standard,Female,Unemployed,No,Newspaper,Acidity/Hyper Acidity,,White Discharge,,

@@ -18,19 +18,7 @@ const LoginPage = () => {
     setError('');
     try {
       const res = await login(username, password, role);
-      if (role === 'ADMIN') {
-        const isAdmin = res.role === 'SUPER_ADMIN' || res.role === 'COLLEGE_ADMIN';
-        if (!isAdmin) {
-          toast.error('Role does not match credentials.');
-          return;
-        }
-      } else {
-        const isUser = res.role === 'FACULTY' || res.role === 'DATA_ANALYST' || res.role === 'VIEWER';
-        if (!isUser) {
-        toast.error('Role does not match credentials.');
-        return;
-        }
-      }
+      // Store authentication data
       localStorage.setItem('auth', JSON.stringify({
         token: res.token,
         username: res.username,
@@ -38,6 +26,7 @@ const LoginPage = () => {
         id: res.id
       }));
       toast.success('Login successful!');
+      // Navigate based on the user's actual role from the backend
       if (res.role === 'SUPER_ADMIN' || res.role === 'COLLEGE_ADMIN') {
         navigate('/admin');
       } else {
